@@ -1,0 +1,102 @@
+import { useState, useEffect } from "react";
+import { Check, Edit, Trash2, Plus } from "lucide-react";
+import './index.css';
+
+export default function TodoApp() {
+    const [tasks, setTasks] = useState(() => JSON.parse(localStorage.getItem("tasks")) || []);
+    const [input, setInput] = useState("");
+
+    useEffect(() => {
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+    }, [tasks]);
+
+    const addTask = () => {
+        if (!input.trim()) return;
+        setTasks([...tasks, { id: Date.now(), text: input, completed: false, editing: false }]);
+        setInput("");
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter") addTask();
+    };
+
+    const toggleTask = (id) => {
+        setTasks(tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task));
+    };
+
+    const deleteTask = (id) => {
+        setTasks(tasks.filter(task => task.id !== id));
+    };
+
+    const editTask = (id) => {
+        setTasks(tasks.map(task => task.id === id ? { ...task, editing: !task.editing } : task));
+    };
+
+    const saveTask = (id, newText) => {
+        setTasks(tasks.map(task => task.id === id ? { ...task, text: newText, editing: false } : task));
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-base-100 shadow-xl rounded-lg p-6">
+                <h1 className="text-3xl font-bold text-center text-primary mb-4">To-Do List</h1>
+
+                <div className="flex mb-4 gap-2">
+                    <input
+                        type="text"
+                        className="input input-bordered w-full"
+                        placeholder="Add a new task"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                    />
+                    <button onClick={addTask} className="btn btn-primary">
+                        <Plus size={20} />
+                    </button>
+                </div>
+
+                <h2 className="text-lg font-semibold text-secondary mb-2 border-b pb-1">TODO</h2>
+                <ul className="space-y-2">
+                    {tasks.filter(task => !task.completed).map((task) => (
+                        <li key={task.id} className="flex items-center gap-2 p-2 border rounded-lg bg-base-300">
+                            <input type="checkbox" onChange={() => toggleTask(task.id)} className="checkbox" />
+                            {task.editing ? (
+                                <input
+                                    type="text"
+                                    className="input input-sm input-bordered w-full"
+                                    defaultValue={task.text}
+                                    onBlur={(e) => saveTask(task.id, e.target.value)}
+                                    autoFocus
+                                />
+                            ) : (
+                                <span className="flex-1">{task.text}</span>
+                            )}
+                            <button onClick={() => editTask(task.id)} className="btn btn-sm btn-outline btn-secondary">
+                                <Edit size={18} />
+                            </button>
+                            <button onClick={() => deleteTask(task.id)} className="btn btn-sm btn-outline btn-error">
+                                <Trash2 size={18} />
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+
+                <h2 className="text-lg font-semibold text-secondary mt-4 mb-2 border-b pb-1">COMPLETED</h2>
+                <ul className="space-y-2">
+                    {tasks.filter(task => task.completed).map((task) => (
+                        <li key={task.id} className="flex items-center gap-2 p-2 border rounded-lg bg-success/30">
+                            <input type="checkbox" checked onChange={() => toggleTask(task.id)} className="checkbox" />
+                            <span className="flex-1 line-through text-gray-500">{task.text}</span>
+                            <button onClick={() => editTask(task.id)} className="btn btn-sm btn-outline btn-secondary">
+                                <Edit size={18} />
+                            </button>
+                            <button onClick={() => deleteTask(task.id)} className="btn btn-sm btn-outline btn-error">
+                                <Trash2 size={18} />
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    );
+}
